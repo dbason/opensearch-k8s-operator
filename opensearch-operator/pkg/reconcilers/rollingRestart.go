@@ -124,6 +124,16 @@ func (r *RollingRestartReconciler) Reconcile() (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
+	if !pendingUpdate {
+		// Catch all Cluster settings update for when upgrade is finished
+		if err := services.SetClusterShardAllocation(r.osClient, services.ClusterSettingsAllocationAll); err != nil {
+			return ctrl.Result{}, err
+		}
+		lg.V(1).Info("No pods pending restart")
+		return ctrl.Result{}, nil
+	}
+	r.recorder.AnnotatedEventf(r.instance, map[string]string{"cluster-name": r.instance.GetName()}, "Normal", "RollingRestart", "Starting to rolling restart")
+
 	// Restart statefulset pod.  Order is not important so we just pick the first we find
 	for _, nodePool := range r.instance.Spec.NodePools {
 		sts := &appsv1.StatefulSet{}
