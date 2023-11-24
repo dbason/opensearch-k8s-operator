@@ -208,6 +208,10 @@ func NewDashboardsConfigMapForCR(cr *opsterv1.OpenSearchCluster, name string, co
 	}
 }
 
+func DashboardsServiceName(cr *opsterv1.OpenSearchCluster) string {
+	return cr.Spec.General.ServiceName + "-dashboards"
+}
+
 func NewDashboardsSvcForCr(cr *opsterv1.OpenSearchCluster) *corev1.Service {
 	var port int32 = 5601
 
@@ -221,7 +225,7 @@ func NewDashboardsSvcForCr(cr *opsterv1.OpenSearchCluster) *corev1.Service {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        cr.Spec.General.ServiceName + "-dashboards",
+			Name:        DashboardsServiceName(cr),
 			Namespace:   cr.Namespace,
 			Labels:      labels,
 			Annotations: cr.Spec.Dashboards.Annotations,

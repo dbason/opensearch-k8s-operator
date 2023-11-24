@@ -107,6 +107,7 @@ func (r *DashboardsReconciler) handleTls() ([]corev1.Volume, []corev1.VolumeMoun
 		return nil, nil, nil
 	}
 	clusterName := r.instance.Name
+	svcName := builders.DashboardsServiceName(r.instance)
 	namespace := r.instance.Namespace
 	annotations := map[string]string{"cluster-name": r.instance.GetName()}
 	tlsSecretName := clusterName + "-dashboards-cert"
@@ -134,12 +135,12 @@ func (r *DashboardsReconciler) handleTls() ([]corev1.Volume, []corev1.VolumeMoun
 		if err != nil {
 			// Generate tls cert and put it into secret
 			dnsNames := []string{
-				fmt.Sprintf("%s-dashboards", clusterName),
-				fmt.Sprintf("%s-dashboards.%s", clusterName, namespace),
-				fmt.Sprintf("%s-dashboards.%s.svc", clusterName, namespace),
-				fmt.Sprintf("%s-dashboards.%s.svc.%s", clusterName, namespace, helpers.ClusterDnsBase()),
+				svcName,
+				fmt.Sprintf("%s.%s", svcName, namespace),
+				fmt.Sprintf("%s.%s.svc", svcName, namespace),
+				fmt.Sprintf("%s.%s.svc.%s", svcName, namespace, helpers.ClusterDnsBase()),
 			}
-			nodeCert, err := ca.CreateAndSignCertificate(clusterName+"-dashboards", clusterName, dnsNames)
+			nodeCert, err := ca.CreateAndSignCertificate(svcName, clusterName, dnsNames)
 			if err != nil {
 				r.logger.Error(err, "Failed to create tls certificate")
 				r.recorder.AnnotatedEventf(r.instance, annotations, "Warning", "Security", "Failed to store tls certificate for Dashboard Cluster")
